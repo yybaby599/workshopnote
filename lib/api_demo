@@ -1,0 +1,32 @@
+import ipywidgets as widgets
+import pandas as pd
+import plotly.express as px
+
+from . import api as api
+from . import ui as ui
+
+out = ui.output()
+
+get_car_manufacturers_button = widgets.Button(
+    description="Get car mfr data",
+    disabled=False,
+    button_style="success",
+    tooltip="Click me",
+)
+
+def get_car_manufacturers(_button):
+    out.clear_output()
+    response = api.get_response("https://vpic.nhtsa.dot.gov/api/vehicles/getallmanufacturers?format=json")
+    results = response["Results"]
+    df = pd.DataFrame(results)
+    df_filtered = df[['Country', 'Mfr_CommonName']]
+    fig = px.pie(data_frame=df_filtered, names="Country", title="Countries of Car Manufacturers")
+    with out:
+        # print(df.head())
+        # print(df_filtered.head())
+        fig.show()
+
+
+get_car_manufacturers_button.on_click(get_car_manufacturers)
+
+ui.show(get_car_manufacturers_button)
