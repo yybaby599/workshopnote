@@ -1,0 +1,3 @@
+import lib.api_demo as ad
+
+ad.out
