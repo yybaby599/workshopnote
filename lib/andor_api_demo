@@ -1,0 +1,81 @@
+import io
+
+import pandas as pd
+import plotly.express as px
+from ipywidgets import widgets
+
+from . import api as api
+from . import env_ui as env_ui
+from . import ui as ui
+
+out = ui.output()
+
+
+def env():
+    return env_ui.env()
+
+
+def get_issuer_regions():
+    fms_url = api.url(host=api.fms_host("INT"), endpoint="/factors/IssuerRegion")
+    response = api.get_response(fms_url)
+    return response["enumeration"]["values"]
+
+
+issuer_region_dropdown = widgets.Dropdown(
+    options=get_issuer_regions(),
+    value="Africa",
+    description="Region",
+    disabled=False
+)
+
+get_countries_button = widgets.Button(
+    description="Get countries",
+    disabled=False,
+    button_style="success",
+    tooltip="Click me",
+)
+
+
+def get_countries_from_andor():
+    andor_url = api.url(host=api.andor_service_host(env()), endpoint="/query/execute/results")
+    query = f"[IssuerRegion] == '{issuer_region_dropdown.value}'"
+    post_body = {
+        "esgishQuery": {
+            "query": query
+        },
+        "entityType": "ISSUER",
+        "columnSpec": {
+            "factorCodes": [
+                "CountryOfIncorporation"
+            ]
+        },
+        "pageNumber": 0,
+        "pageSize": 100000,
+        "sortColumn": "CountryOfIncorporation",
+        "sortAscending": True,
+        "includeDrivers": False
+    }
+    return api.post_response_text(url=andor_url, post_body=post_body)
+
+
+def get_countries_pie_chart(_button):
+    out.clear_output()
+    response = get_countries_from_andor()
+    country_of_incorp = "CountryOfIncorporation"
+    countries_of_incorporation = country_of_incorp + "\n" + response.text
+    csv_file = io.StringIO(countries_of_incorporation)  # treat the string as a file-like object
+    df = pd.read_csv(csv_file)
+    # count the frequency of each country and select the top 10
+    top_10_countries = df[country_of_incorp].value_counts().head(10).index
+    # filter the dataframe to include only the top 10 countries
+    df_top_10 = df[df[country_of_incorp].isin(top_10_countries)]
+    fig = px.pie(data_frame=df_top_10, names=country_of_incorp, title="Countries of Incorporation")
+    with out:
+        # print(df.head())
+        fig.show()
+
+
+get_countries_button.on_click(get_countries_pie_chart)
+
+ui.show(issuer_region_dropdown)
+ui.show(get_countries_button)
