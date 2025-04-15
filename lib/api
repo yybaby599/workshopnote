@@ -1,0 +1,107 @@
+import requests
+
+# Environments
+andor_services_host = {
+    "LOCAL": "http://localhost:8090/dd/andor",
+    "INT": "http://andor-dev.dd-dev.m3s7.issgovernance.com/dd/andor",
+    "QA": "http://andor-qa.dd-dev.m3s7.issgovernance.com/dd/andor",
+    "UAT": "http://andor.dd-uat.m3s7.issgovernance.com/dd/andor",
+    "PROD": "http://andor.dd.m3s8.issgovernance.com/dd/andor"
+}
+
+factor_metadata_service_host = {
+    "INT": "http://fms.dd-dev.m3s7.issgovernance.com/metadata/api"
+}
+
+
+def andor_service_host(env):
+    return andor_services_host[env]
+
+def fms_host(env):
+    return factor_metadata_service_host[env]
+
+
+def url(host, endpoint):
+    return host + endpoint
+
+
+def get_response(url):
+    response = requests.get(url)
+    status_code = response.status_code
+    print(f'GET {url} returned {status_code}')
+    if status_code != 200:
+        return response
+    json = response.json()
+    response.close()
+    return json
+
+
+def get_response_with_token(url, token):
+    response = requests.get(url, headers={"X-ISS-AuthToken": token})
+    status_code = response.status_code
+    print(f'GET {url} returned {status_code}')
+    if response.status_code != 200:
+        return response
+    json = response.json()
+    response.close()
+    return json
+
+
+def get_plain_text_response(url):
+    response = requests.get(url)
+    status_code = response.status_code
+    print(f'GET {url} returned {status_code}')
+    text = response.text
+    response.close()
+    return text
+
+
+def has_error(response):
+    return hasattr(response, "status_code")
+
+
+def post_response_json(url, post_body):
+    return post_response_json_with_headers(url, post_body, None)
+
+
+def post_response_json_with_headers(url, post_body, headers):
+    if headers is None:
+        response = requests.post(url=url, json=post_body)
+    else:
+        response = requests.post(url=url, json=post_body, headers=headers)
+    print(f'POST {url} with body…\n{post_body}')
+    if isinstance(response, int):
+        return response
+    print(response)
+    json = response.json()
+    response.close()
+    return json
+
+
+def post_response_text(url, post_body):
+    response = requests.post(url=url, json=post_body)
+    status_code = response.status_code
+    print(f'GET {url} returned {status_code}')
+    return response
+
+
+def post_response_form_urlencoded(url, form_data):
+    response = requests.post(url, form_data, {'Content-Type': 'application/x-www-form-urlencoded'})
+    if isinstance(response, int):
+        return response
+    json = response.json()
+    response.close()
+    return json
+
+
+def put_response(url, post_body):
+    response = requests.put(url=url, json=post_body)
+    json = response.json()
+    response.close()
+    return json
+
+
+def with_param(url, name, value):
+    if not value:
+        return url
+    return url + "&" + name + "=" + value
