@@ -1,0 +1,90 @@
+import ipywidgets as widgets
+import pandas as pd
+
+from . import api as api
+from . import env_ui as env_ui
+from . import indexes as ind
+from . import ui as ui
+
+out = ui.output()
+
+
+def env():
+    return env_ui.env()
+
+
+textarea_layout = widgets.Layout(
+    display='flex',
+    flex_flow='row',
+    justify_content='space-between',
+    flex_wrap='wrap',
+    width='90%'
+)
+
+filter_input = widgets.Textarea(
+    description="Filter",
+    value="[oekomPerformanceScore] > '70'",
+    layout=textarea_layout
+)
+
+index_name_to_id = ind.index_name_to_id
+universe_index_multi_select = ind.universe_index_multi_select
+
+date_picker = ui.date_picker()
+
+export_results_button = widgets.Button(
+    description="Export to Excel",
+    button_style="success",
+    tooltip="Click me"
+)
+
+
+def query_issuer_ids(filter, esgish_version, index_ids, date, env):
+    andor_url = api.url(host=api.andor_service_host(env), endpoint="/query/issuer-ids")
+    all_indexes = True if index_ids is None else False
+    date = date if date is None else date.isofomrat()
+    post_body = {
+        "esgishQuery": {
+            "query": filter,
+            "esgishVersion": esgish_version
+        },
+        "universe": {
+            "indexIds": index_ids,
+            "allIndexes": all_indexes
+        },
+        "date": date
+    }
+    return api.post_response_json(url=andor_url, post_body=post_body)
+
+
+def issuer_ids_df():
+    if filter_input.value is None:
+        return
+    selected_indexes = universe_index_multi_select.value
+    if selected_indexes:
+        selected_index_ids = [index_name_to_id[index_name] for index_name in selected_indexes]
+    else:
+        selected_index_ids = None
+    issuer_ids_json = query_issuer_ids(
+        filter=filter_input.value,
+        esgish_version="v2",
+        index_ids=selected_index_ids,
+        date=date_picker.value,
+        env=env()
+    )
+    return pd.DataFrame(issuer_ids_json, columns=["Issuer IDs"])
+
+
+def export_results(_button):
+    writer = pd.ExcelWriter('issuer_ids_export.xlsx')
+    results_df = issuer_ids_df()
+    results_df.to_excel(writer, sheet_name='results', index=False)
+    writer.close()
+
+
+export_results_button.on_click(export_results)
+
+ui.show(filter_input)
+ui.show(universe_index_multi_select)
+ui.show(date_picker)
+ui.show(export_results_button)
