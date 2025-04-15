@@ -1,0 +1,36 @@
+import ipywidgets as widgets
+
+from . import ui as ui
+
+out = ui.output()
+
+textarea_layout = widgets.Layout(
+    display='flex',
+    flex_flow='row',
+    justify_content='space-between',
+    flex_wrap='wrap',
+    width='90%'
+)
+
+name_input = widgets.Textarea(description='Name', layout=textarea_layout)
+
+enter_button = widgets.Button(
+    description='Enter',
+    button_style='success',
+    tooltip='Click me'
+)
+
+
+def print_hello(_button):
+    out.clear_output()
+    if name_input.value is None:
+        return
+    with out:
+        print("hello, " + name_input.value)
+
+
+enter_button.on_click(print_hello)
+
+ui.show(name_input)
+ui.show(enter_button)
+
