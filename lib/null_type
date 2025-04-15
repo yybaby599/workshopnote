@@ -1,0 +1,19 @@
+class NullType:
+    def __init__(self, code, label):
+        self.code = code
+        self.label = label
+
+
+NOT_COLLECTED = NullType("NOT_COLLECTED", "Not Collected")
+
+NULL_TYPES = [
+    NOT_COLLECTED,
+    NullType("NOT_APPLICABLE", "Not Applicable"),
+    NullType("NOT_MEANINGFUL", "Not Meaningful"),
+    NullType("NOT_DISCLOSED", "Not Disclosed"),
+    NullType("NO_INFORMATION", "No Information"),
+]
+
+NULL_TYPE_SANS_NOT_COLLECTED = [
+    null_type for null_type in NULL_TYPES if null_type != NOT_COLLECTED
+]
