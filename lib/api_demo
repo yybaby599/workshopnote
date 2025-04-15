@@ -1,4 +1,4 @@
-import ipywidgets as widgets
+import ipywidgets as widgets 
 import pandas as pd
 import plotly.express as px
 
@@ -6,6 +6,8 @@ from . import api as api
 from . import ui as ui
 
 out = ui.output()
+
+## Create a button
 
 get_car_manufacturers_button = widgets.Button(
     description="Get car mfr data",
