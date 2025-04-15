@@ -1,0 +1,40 @@
+import ipywidgets as widgets
+import plotly.express as px
+
+from . import ui as ui
+from .custom_components import multi_select_dropdown as multi_select_dropdown
+
+out = ui.output()
+
+df = px.data.iris()
+column_names = df.columns.tolist()
+column_names.remove("species")
+column_names.remove("species_id")
+
+axes_dropdown = multi_select_dropdown.MultiSelectCombobox(column_names, max_selection=2, placeholder="Select axes")
+
+get_scatter_plot_button = widgets.Button(
+    description="Get Scatter Plot",
+    disabled=False,
+    button_style="success",
+    tooltip="Click me",
+)
+
+
+def scatter_plot(_button):
+    out.clear_output()
+    axes_selection = axes_dropdown.selected_values
+    if len(axes_selection) != 2:
+        with out:
+            print("Please select 2 attributes.")
+        return
+    fig = px.scatter(df, x=axes_selection[0], y=axes_selection[1], color="species")
+    with out:
+        # print(df.head())
+        fig.show()
+
+
+get_scatter_plot_button.on_click(scatter_plot)
+
+ui.show(axes_dropdown)
+ui.show(get_scatter_plot_button)
