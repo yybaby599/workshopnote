@@ -1,0 +1,29 @@
+from ipywidgets import widgets
+
+from . import ui as ui
+
+local_environment = "LOCAL"
+
+environment_dropdown = widgets.Dropdown(
+    options=[local_environment, "INT", "QA", "UAT", "PROD"],
+    layout={"width": "180px"},
+    style={"description_width": "initial"},
+    value="INT", 
+    description="Environment",
+    disabled=False,
+)
+
+ui.show(environment_dropdown)
+
+
+def env():
+    return environment_dropdown.value
+
+
+def local():
+    environment_dropdown.value = local_environment
+
+
+out = ui.output()
+
+out
