@@ -1,0 +1,27 @@
+import pandas as pd
+import plotly.express as px
+
+from . import ui as ui
+
+out = ui.output()
+
+student_ds = {
+    'Students': ["Pete", "Katherine", "Grace", "Ryan", "Michael"],
+    'Grades': [99, 88, 76, 95, 62],
+    'Attendance': [.98, .85, .79, .75, .68]
+}
+
+student_df = pd.DataFrame(student_ds)
+
+student_df_from_csv = pd.read_csv('student_ds.csv')
+
+student_df_from_json = pd.read_json('student_ds.json')
+
+fig = px.scatter(student_df, x='Grades', y='Attendance', title="Students' Records", width=1000, height=600, hover_data=['Students'])
+
+with out:
+    print(student_df)
+    print(student_df.corr(numeric_only=True))
+    fig.show()
+    # print(student_df_from_csv)
+    # print (student_df_from_json)
