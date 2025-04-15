@@ -1,0 +1,11 @@
+from . import ui as ui
+
+out = ui.output()
+
+
+def print_hello():
+    out.clear_output()
+    with out:
+        print("hello world")
+        
+print_hello()
