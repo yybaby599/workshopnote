@@ -1,0 +1,192 @@
+
+import pandas as pa
+import plotly.express as px
+import plotly.graph_objects as go
+from IPython.core.display_functions import clear_output, display
+from ipywidgets import widgets
+
+from . import null_type as nt
+
+
+def input_text(description, value, width):
+    _input = widgets.Text(description=description, value=value,
+                          style={'description_width': 'initial'},
+                          layout=widgets.Layout(width=str(width) + 'px'))
+    show(_input)
+    return _input
+
+
+def date_picker_with_label(description):
+    date = widgets.DatePicker(
+        description=description,
+        disabled=False
+    )
+    return date
+
+
+def date_picker():
+    return date_picker_with_label('Date')
+
+
+def show(thing):
+    display(thing)
+
+
+def show_fields(obj, label_field_pairs):
+    for label_field_pair in label_field_pairs:
+        if label_field_pair[1] in obj:
+            show(
+                widgets.HBox(
+                    [
+                        widgets.Label(
+                            value=label_field_pair[0],
+                            layout=widgets.Layout(width="125px"),
+                        ),
+                        widgets.Text(
+                            disabled=True, value=str(obj[label_field_pair[1]])
+                        ),
+                    ]
+                )
+            )
+
+
+def show_values(label_value_pairs):
+    for label_value_pair in label_value_pairs:
+        show(
+            widgets.HBox(
+                [
+                    widgets.Label(
+                        value=label_value_pair[0],
+                        layout=widgets.Layout(width="125px"),
+                    ),
+                    widgets.Text(disabled=True, value=str(label_value_pair[1])),
+                ]
+            )
+        )
+
+
+def output():
+    return widgets.Output(layout={"border": "1px solid black"})
+
+
+def show_statistics(data_type, statistics, out):
+    label_value_pairs = []
+    if "nullTypeCounts" in statistics:
+        null_type_counts = statistics["nullTypeCounts"]
+        for null_type in nt.NULL_TYPE_SANS_NOT_COLLECTED:
+            count = null_type_counts[null_type.code]
+            if count > 0:
+                label_value_pairs.append((null_type.label, count))
+    values_summary = []
+    if "valuesSummary" in statistics:
+        values_summary = statistics["valuesSummary"]
+    if "valueCount" in values_summary:
+        label_value_pairs.append(("Value count", values_summary["valueCount"]))
+    fig = None
+    if (data_type == "DOUBLE" or data_type == "INTEGER") and "min" in values_summary:
+        label_value_pairs.append(("Min", values_summary['min']))
+        label_value_pairs.append(("Median", values_summary["median"]))
+        label_value_pairs.append(("Max", values_summary["max"]))
+    if data_type == "DOUBLE":
+        if "smallestPositive" in values_summary:
+            label_value_pairs.append(("Smallest positive", values_summary["smallestPositive"]))
+        label_value_pairs.append(("Negative count", values_summary["negativeCount"]))
+        label_value_pairs.append(("Zero count", values_summary["zeroCount"]))
+        if "mean" in values_summary:
+            label_value_pairs.append(("Mean", values_summary["mean"]))
+        if "standardDeviation" in values_summary:
+            label_value_pairs.append(("Standard deviation", values_summary["standardDeviation"]))
+        if "skewness" in values_summary:
+            label_value_pairs.append(("Skewness", values_summary["skewness"]))
+    if data_type in ["DOUBLE", "CURRENCYFLOAT"] and "histogram" in values_summary:
+        # make histogram
+        histogram = values_summary["histogram"]
+        y = histogram["binCounts"]
+        if len(y) > 0:
+            bottom = histogram["bottom"]
+            bin_width = histogram["binWidth"]
+            x = [bottom + (i + 0.5) * bin_width for i in range(len(y))]
+            fig = go.Figure(
+                data=[
+                    go.Bar(
+                        x=x,
+                        y=y,
+                        width=[bin_width for _ in y],  # customize width here
+                    )
+                ]
+            )
+    elif data_type == "INTEGER":
+        # make histogram
+        if "counts" in values_summary:
+            counts = values_summary["counts"]
+            x = [c["value"] for c in counts]
+            y = [c["count"] for c in counts]
+            fig = go.Figure(data=[go.Bar(x=x, y=y)])
+    elif data_type in [
+        "BOOLEAN",
+        "STRING",
+        "STRINGENUMERATION",
+        "STRINGLIST",
+        "LONGSTRING",
+        "NODELIST",
+        "STRINGMAP",
+    ]:
+        if "topNValueCountPlusOther" in values_summary and len(values_summary["topNValueCountPlusOther"]) >= 10:
+            data_frame = pa.DataFrame(values_summary["topNValueCountPlusOther"])
+            fig = px.pie(data_frame=data_frame, values="count", names="value")
+        elif "valueCounts" in values_summary:
+            data_frame = pa.DataFrame(values_summary["valueCounts"])
+            fig = px.pie(data_frame=data_frame, values="count", names="value")
+    elif data_type in ["DATE"]:
+        if "minDate" in values_summary:
+            label_value_pairs.append(("Min", values_summary["minDate"]))
+            label_value_pairs.append(("Max", values_summary["maxDate"]))
+    with out:
+        show_values(label_value_pairs=label_value_pairs)
+        if fig is not None:
+            fig.show()
+
+
+textarea_90pct_width_layout = widgets.Layout(
+    display='flex',
+    flex_flow='row',
+    justify_content='space-between',
+    flex_wrap='wrap',
+    width='90%'
+)
+
+sfc_out = output()
+
+
+def display_loading_message(out):
+    css_path = get_path()
+    """Display a loading message with a stylish loader."""
+    with open(css_path, 'r') as css_file:
+        css_content = css_file.read()
+
+    loading_message = widgets.HTML(
+        value="""
+        <style>
+            %s
+        </style>
+        <div class="loader-container">
+            <div class="loader"></div>
+            <div class="loader-text">Loading</div>
+        </div>
+        """ % css_content
+    )
+    with out:
+        clear_output()
+        show(loading_message)
+
+
+def hide_loading_message(out):
+    """Hide the loading message."""
+    with out:
+        clear_output()
+
+
+def get_path():
+    notebook_directory = os.path.dirname(os.path.abspath("__file__"))
+    css_file_path = os.path.join(notebook_directory, 'lib', 'styles', 'custom.css')
+    return css_file_path
