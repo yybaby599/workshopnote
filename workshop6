@@ -1,3 +1,18 @@
 import lib.iris as ir
 
 ir.out
+
+###
+df=px.data.iris() ## iris is a pandas df that's used in machine learning alot
+
+## eg
+import ipywidgets as widgets
+import plotly.express as px
+
+out = ui.output()
+
+df = px.data.iris()
+with out:
+  print(df.head())
+###
+
