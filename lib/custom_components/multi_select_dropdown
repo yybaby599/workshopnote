@@ -1,0 +1,94 @@
+from ipywidgets import widgets, Layout, VBox, HTML
+
+
+class MultiSelectCombobox(VBox):
+    def __init__(self, options, max_selection=0, placeholder='Select options'):
+        self.options = options
+        self.selected_values = []
+        self.max_selection = max_selection
+
+        self.combobox_widget = widgets.Combobox(
+            options=options,
+            placeholder=placeholder,
+            ensure_option=True,
+            disabled=False
+        )
+
+        self.add_button = widgets.Button(description="Add", button_style='success')
+        self.add_button.on_click(self.add_selected)
+
+        self.buttons_container = widgets.HBox([self.add_button])
+
+        self.selected_display = HTML(value="")
+        self.selected_buttons = []
+
+        super().__init__([self.combobox_widget, self.buttons_container, self.selected_display])
+
+        # Observe changes in Combobox value
+        self.combobox_widget.observe(self.on_value_change, names='value')
+        self.combobox_widget.observe(self.on_value_change, names='value')
+
+    def on_value_change(self, change):
+        # Enable the "Add" button only if there is a selection
+        self.add_button.disabled = change['new'] == '' or change['new'] in self.selected_values
+
+    def add_selected(self, _button):
+        selected = self.combobox_widget.value
+        if selected and selected not in self.selected_values:
+            # Add selected value to the list
+            self.selected_values.append(selected)
+            # Update the Combobox options
+            self.update_combobox_options()
+            # Clear the Combobox after adding
+            self.combobox_widget.value = ''
+            # Update the display
+            self.update_display()
+            # Disable dropdown selection on max selection
+            if 0 < self.max_selection == len(self.selected_values):
+                self.combobox_widget.disabled = True
+
+    def remove_selected(self, button):
+        # Remove the selected value
+        removed_value = button.tooltip
+        self.selected_values.remove(removed_value)
+        # Re-allow Dropdown selection
+        if self.max_selection > 0 and len(self.selected_values) < self.max_selection:
+            self.combobox_widget.disabled = False
+        self.combobox_widget.disabled = False
+        # Update the Combobox options
+        self.update_combobox_options()
+        # Update the display
+        self.update_display()
+
+    def update_combobox_options(self):
+        self.combobox_widget.options = tuple([option for option in self.options if option not in self.selected_values])
+
+    def update_display(self):
+        # Display the selected values as buttons/chips
+        self.selected_buttons = [
+            widgets.Button(description=value, icon='times', tooltip=value, layout=Layout(margin='5px'))
+            for value in self.selected_values]
+        # Set the on_click event for each button
+        for button in self.selected_buttons:
+            button.on_click(self.remove_selected)
+        # Update the display
+        self.selected_display.value = ""
+        self.buttons_container.children = [self.add_button] + self.selected_buttons
+
+    def get_selected_values(self):
+        return self.selected_values
+
+    def set_options(self, options):
+        self.options = options
+        self.combobox_widget.options = options
+
+    def remove_all_selected(self):
+        for button in self.selected_buttons:
+            self.remove_selected(button)
+
+
+# Example usage:
+# options = ['Option 1', 'Option 2', 'Option 3']
+# max_selection = 2 #This disable selection once max_selection is done
+# multi_select_combobox = MultiSelectCombobox(options,max_selection)
+# multi_select_combobox
