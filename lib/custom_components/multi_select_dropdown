@@ -92,3 +92,4 @@ class MultiSelectCombobox(VBox):
 # max_selection = 2 #This disable selection once max_selection is done
 # multi_select_combobox = MultiSelectCombobox(options,max_selection)
 # multi_select_combobox
+### axes_dropdown = multi_select_dropdown.MultiSelectCombobox(column_names, max_selection=2, placeholder="Select axes")
