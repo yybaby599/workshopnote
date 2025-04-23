@@ -6,7 +6,11 @@ git checkout -b workshop-eg
 
 #b stands for branch
 
+#to comit the change\
+
 git add .
 
 git commit -m 'workshop6' #merge
+
+git push #then copy
 
