@@ -1,3 +1,5 @@
+##multi select
+
 import ipywidgets as widgets
 
 index_options = [
