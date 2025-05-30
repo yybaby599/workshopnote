@@ -1,0 +1,34 @@
+##Workshop 8
+
+Calling Andor’s POST /query/issuer-ids endpoint
+
+Creating an exportable Excel file from a Pandas DataFrame
+##
+
+import redis
+import threading
+import time
+
+# Connect to Redis
+redis_client = redis.StrictRedis(host='localhost', port=6379, db=0)
+
+# Create a pubsub object to subscribe to 'my_channel'
+pubsub = redis_client.pubsub()
+
+# Subscribe to 'my_channel'
+pubsub.subscribe('my_channel')
+
+def redis_subscriber():
+    print("Subscribed to 'my_channel'. Waiting for messages...")
+
+    # Listen for messages in an infinite loop
+    while True:
+        message = pubsub.get_message()
+        if message and message['type'] == 'message':
+            print(f"Received message from 'my_channel': {message['data']} on channel: {message['channel']}")
+        time.sleep(0.1)  # Prevent busy-waiting and CPU overload
+
+# Start the subscriber in a separate thread
+# Daemon thread will run in the background and will not block the program from exiting when the main program finishes
+subscriber_thread = threading.Thread(target=redis_subscriber, daemon=True)
+subscriber_thread.start()
