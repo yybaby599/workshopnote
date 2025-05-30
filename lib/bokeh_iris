@@ -1,0 +1,29 @@
+from bokeh.models import ColumnDataSource
+from bokeh.plotting import figure, show, output_notebook
+import plotly.express as px
+
+# enable notebook output
+output_notebook()
+
+# DataFrame of Iris dataset
+df = px.data.iris()
+
+# pass DataFrame to ColumnDataSource
+source = ColumnDataSource(df)
+
+# tooltips must be supplied to the figure as a list of (label, value) tuples
+# field names that begin with @ are associated with columns in a ColumnDataSource
+TOOLTIPS = [
+    ("Species", "@species"),
+    ("Sepal length", "@sepal_length"),
+    ("Sepal width", "@sepal_width"),
+]
+
+# create a figure
+p = figure(title="Iris Dataset", x_axis_label="Sepal length", y_axis_label="Sepal width", tooltips=TOOLTIPS)
+
+# add a scatter plot
+p.scatter(x="sepal_length", y="sepal_width", source=source, size=10)
+
+# show the results
+show(p)
